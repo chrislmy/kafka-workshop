@@ -26,7 +26,6 @@ const messageBatch = async (cities) => {
     .map(route => {
       const routeId = uuidv4();
       console.log(`Producing message with route id: ${routeId}`);
-
       return {
         key: routeId,
         value: JSON.stringify({
