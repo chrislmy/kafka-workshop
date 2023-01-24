@@ -4,6 +4,7 @@ const { generateRoutes, getCityData } = require('./lib/routeGenerator');
 
 const TOPIC_NAME = 'travel_routes';
 const MAX_BATCH_SIZE = 5; // Max number of messages per batch
+const MIN_ROUTE_SIZE = 5; // Max number of cities in a route
 const MAX_ROUTE_SIZE = 10; // Max number of cities in a route
 const MAX_MESSAGE_INTERVAL_SECONDS = 5; // Max interval length in seconds between messages sent
 const CITY_DATA_FILENAME = 'uk-cities-data';
@@ -21,7 +22,7 @@ const kafka = new Kafka({
 const producer = kafka.producer();
 
 const messageBatch = async (cities) => {
-  const routes = await generateRoutes(MAX_BATCH_SIZE, MAX_ROUTE_SIZE, cities);
+  const routes = await generateRoutes(MIN_ROUTE_SIZE, MAX_BATCH_SIZE, MAX_ROUTE_SIZE, cities);
   const messages = routes
     .map(route => {
       const routeId = uuidv4();

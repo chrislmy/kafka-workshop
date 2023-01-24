@@ -30,12 +30,12 @@ const getCityData = (fileName) => new Promise((resolve, reject) => {
     });
 });
 
-const generateRoutes = (maxBatchSize, maxRouteSize, cities) => {
+const generateRoutes = (minBatchSize, maxBatchSize, maxRouteSize, cities) => {
   const routes = [];
   const batchSize = Math.floor(Math.random() * maxBatchSize) + 1;
 
   for (let i = 0; i < batchSize; i++) {
-    const routeSize = Math.floor(Math.random() * maxRouteSize) + 1;
+    const routeSize = Math.floor(Math.random() * (maxRouteSize - minBatchSize + 1)) + minBatchSize;
     const route = [];
 
     for (let j = 0; j < routeSize; j++) {

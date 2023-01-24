@@ -30,6 +30,9 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String brokers;
 
+    @Value("${application.kafka-consumers.travel-routes.num-consumers}")
+    private int numTravelRouteTopicConsumers;
+
     private ObjectMapper objectMapper;
 
     public KafkaConsumerConfig(ObjectMapper objectMapper) {
@@ -57,12 +60,11 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, Route>>
-    routeKafkaListenerContainerFactory() {
+    KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, Route>> routeKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, Route> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(routeConsumerFactory());
-        factory.setConcurrency(3);
+        factory.setConcurrency(numTravelRouteTopicConsumers);
         return factory;
     }
 }

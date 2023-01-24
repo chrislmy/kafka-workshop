@@ -1,6 +1,7 @@
 package com.example.kafkaworkshop.consumers;
 
 import com.example.kafkaworkshop.domain.Route;
+import com.example.kafkaworkshop.repository.RouteRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -18,8 +19,11 @@ public class RouteConsumer {
 
     private ObjectMapper objectMapper;
 
-    public RouteConsumer(ObjectMapper objectMapper) {
+    private RouteRepository routeRepository;
+
+    public RouteConsumer(ObjectMapper objectMapper, RouteRepository routeRepository) {
         this.objectMapper = objectMapper;
+        this.routeRepository = routeRepository;
     }
 
     @KafkaListener(topics = "travel_routes", containerFactory = "routeKafkaListenerContainerFactory")
@@ -27,7 +31,6 @@ public class RouteConsumer {
         @Payload Route route,
         @Header(KafkaHeaders.RECEIVED_PARTITION) int partition
     ) throws JsonProcessingException {
-        logger.info("Consuming route with routeId: {}, from partition: {}", route.getRouteId(), partition);
-        logger.info("Route payload: {}", objectMapper.writeValueAsString(route));
+        routeRepository.addRoute(route);
     }
 }
