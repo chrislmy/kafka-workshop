@@ -23,12 +23,6 @@ public class GreedyRouteOptimiser implements RouteOptimiser {
         }
     }
 
-    private DistanceCalculator distanceCalculator;
-
-    public GreedyRouteOptimiser(DistanceCalculator distanceCalculator) {
-        this.distanceCalculator = distanceCalculator;
-    }
-
     @Override
     public Route optimiseRoute(Route route) {
         Map<Location, List<Node>> graph = generateGraph(route);
@@ -73,7 +67,7 @@ public class GreedyRouteOptimiser implements RouteOptimiser {
             for (int j = 0; j < route.getRoute().size(); j++) {
                 if (i == j) continue;
                 Location endLocation = route.getRoute().get(j);
-                double distance = distanceCalculator
+                double distance = HaversineDistanceCalculator
                         .calculateDistance(startLocation.getLatitude(), startLocation.getLongitude(),
                             endLocation.getLatitude(), endLocation.getLongitude());
                 Node edge = new Node(endLocation, distance);

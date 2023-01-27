@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface RouteOptimisationService {
 
-    List<Route> getOptimisedRoutes(List<Route> routes);
+    List<Route> getOptimisedRoutes(List<Route> routes) throws Exception;
 }

@@ -1,54 +1,63 @@
 package com.example.kafkaworkshop.components;
 
-import com.example.kafkaworkshop.consumers.RouteConsumer;
 import com.example.kafkaworkshop.domain.Route;
+import com.example.kafkaworkshop.domain.RouteOptimisationStrategy;
 import com.example.kafkaworkshop.repository.RouteRepository;
+import com.example.kafkaworkshop.service.GreedyRouteOptimisationService;
 import com.example.kafkaworkshop.service.RouteOptimisationService;
+import com.example.kafkaworkshop.service.SimulatedAnnealingOptimisationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Component
 public class RouteOptimiserWorker {
 
-    private static final Logger logger = LoggerFactory.getLogger(RouteConsumer.class);
-
+    private static final Logger logger = LoggerFactory.getLogger(RouteOptimiserWorker.class);
     private RouteRepository routeRepository;
-    private RouteOptimisationService routeOptimisationService;
-
-    private HaversineDistanceCalculator distanceCalculator;
+    private GreedyRouteOptimisationService greedyRouteOptimisationService;
+    private SimulatedAnnealingOptimisationService simulatedAnnealingOptimisationService;
+    private OptimisedRouteReporter optimisedRouteReporter;
 
     @Value("${application.workers.route-optimiser.routes-processed-per-batch}")
     private int routesProcessedPerBatch;
     @Value("${application.workers.route-optimiser.processing-delay}")
     private long processingDelay;
 
-    public RouteOptimiserWorker(RouteRepository routeRepository, RouteOptimisationService routeOptimisationService,
-                                HaversineDistanceCalculator distanceCalculator) {
+    @Value("${application.workers.route-optimiser.optimisation-strategy}")
+    private String optimisationStrategy;
+
+    public RouteOptimiserWorker(RouteRepository routeRepository,
+            GreedyRouteOptimisationService greedyRouteOptimisationService,
+            SimulatedAnnealingOptimisationService simulatedAnnealingOptimisationService,
+            OptimisedRouteReporter optimisedRouteReporter) {
         this.routeRepository = routeRepository;
-        this.routeOptimisationService = routeOptimisationService;
-        this.distanceCalculator = distanceCalculator;
+        this.greedyRouteOptimisationService = greedyRouteOptimisationService;
+        this.simulatedAnnealingOptimisationService = simulatedAnnealingOptimisationService;
+        this.optimisedRouteReporter = optimisedRouteReporter;
     }
 
     public void start() throws InterruptedException {
+        RouteOptimisationStrategy strategy = RouteOptimisationStrategy.toStrategy(optimisationStrategy);
+        RouteOptimisationService routeOptimisationService = switch (strategy) {
+            case GREEDY -> greedyRouteOptimisationService;
+            default -> simulatedAnnealingOptimisationService;
+        };
+
         while(true) {
             List<Route> routes = routeRepository.getBatchOfRoutes(routesProcessedPerBatch);
-            Map<String, Route> routesMap = routes
-                    .stream()
-                    .collect(Collectors.toMap(Route::getRouteId, Function.identity()));
-            List<Route> optimisedRoutes = routeOptimisationService.getOptimisedRoutes(routes);
-            for (Route route : optimisedRoutes) {
-                logger.info("[Worker]: Cost route id: {}, before: {}, after: {}",
-                        route.getRouteId(), routesMap.get(route.getRouteId()).cost(distanceCalculator),
-                        route.cost(distanceCalculator));
+            try {
+                ExecutionTimer.TimedResult<List<Route>> timedResult = new ExecutionTimer().timeCheckedFunction(routes,
+                        routeOptimisationService::getOptimisedRoutes);
+                optimisedRouteReporter.report(routes, timedResult.result, timedResult.elapsed);
+                Thread.sleep(processingDelay);
+            } catch (Exception e) {
+                logger.error("Failed to optimise batch of routes: {}", e.getMessage());
+                routeRepository.addRoutes(routes);
             }
-            Thread.sleep(processingDelay);
         }
     }
 }

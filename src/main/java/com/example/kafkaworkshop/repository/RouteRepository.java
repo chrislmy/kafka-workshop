@@ -30,4 +30,8 @@ public class RouteRepository {
         }
         return result;
     }
+
+    public void addRoutes(List<Route> routes) {
+        routes.addAll(routes);
+    }
 }

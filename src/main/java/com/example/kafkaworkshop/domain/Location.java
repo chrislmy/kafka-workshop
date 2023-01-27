@@ -49,4 +49,8 @@ public class Location {
     public String getCountryCode() {
         return countryCode;
     }
+
+    public Location clone() {
+        return new Location(city, latitude, longitude, country, countryCode);
+    }
 }
