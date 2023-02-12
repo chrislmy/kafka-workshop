@@ -1,16 +1,19 @@
 package com.example.kafkaworkshop.components;
 
+import com.example.kafkaworkshop.domain.OptimiserParameters;
 import com.example.kafkaworkshop.domain.Route;
+import com.example.kafkaworkshop.domain.WithParameters;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Random;
 
 @Component
-public class SimulatedAnnealingOptimiser implements RouteOptimiser {
+public class SimulatedAnnealingOptimiser implements RouteOptimiser, WithParameters<OptimiserParameters> {
 
     @Value("${application.route-optimiser.simulated-annealing.temperature}")
     private double temperature;
+
     @Value("${application.route-optimiser.simulated-annealing.cooling-factor}")
     private double coolingFactor;
 
@@ -45,6 +48,12 @@ public class SimulatedAnnealingOptimiser implements RouteOptimiser {
         }
 
         return bestRoute;
+    }
+
+    @Override
+    public void setParameters(OptimiserParameters params) {
+        this.temperature = params.getTemperature();
+        this.coolingFactor = params.getCoolingFactor();
     }
 
     private double probability(double f1, double f2, double temp) {

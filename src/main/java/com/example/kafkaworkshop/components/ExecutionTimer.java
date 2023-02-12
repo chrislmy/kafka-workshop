@@ -2,7 +2,7 @@ package com.example.kafkaworkshop.components;
 
 public class ExecutionTimer {
 
-    static class TimedResult<ReturnType> {
+    public static class TimedResult<ReturnType> {
         public ReturnType result;
         public long elapsed;
 
