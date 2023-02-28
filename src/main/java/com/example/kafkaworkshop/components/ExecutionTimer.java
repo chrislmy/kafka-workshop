@@ -1,5 +1,7 @@
 package com.example.kafkaworkshop.components;
 
+import java.util.concurrent.Callable;
+
 public class ExecutionTimer {
 
     public static class TimedResult<ReturnType> {
@@ -12,15 +14,9 @@ public class ExecutionTimer {
         }
     }
 
-    @FunctionalInterface
-    public interface CheckedFunction<T, R> {
-        R apply(T t) throws Exception;
-    }
-
-    public <InputType, ReturnType> TimedResult<ReturnType> timeCheckedFunction(InputType input,
-           CheckedFunction<InputType, ReturnType> func) throws Exception {
+    public <ReturnType> TimedResult<ReturnType> time(Callable<ReturnType> func) throws Exception {
         long startTime = System.currentTimeMillis();
-        ReturnType result = func.apply(input);
+        ReturnType result = func.call();
         long endTime = System.currentTimeMillis();
         return new TimedResult<>(result, endTime - startTime);
     }

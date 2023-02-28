@@ -9,6 +9,7 @@ import com.example.kafkaworkshop.service.GreedyRouteOptimisationService;
 import com.example.kafkaworkshop.service.MultiLayerSimulatedAnnealingOptimisationService;
 import com.example.kafkaworkshop.service.RouteOptimisationService;
 import com.example.kafkaworkshop.service.SimulatedAnnealingOptimiserService;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,9 +66,9 @@ public class RouteOptimiserScheduledJob implements WithParameters<WorkerParamete
 
         List<Route> routes = routeRepository.getBatchOfRoutes(routesProcessedPerBatch);
         try {
-            ExecutionTimer.TimedResult<List<Route>> timedResult = new ExecutionTimer().timeCheckedFunction(routes,
-                    routeOptimisationService::getOptimisedRoutes);
-            optimisedRouteReporter.report(routes, timedResult.result, timedResult.elapsed);
+            ExecutionTimer.TimedResult<List<Route>> timedResult = new ExecutionTimer()
+                .time(() -> routeOptimisationService.getOptimisedRoutes(routes));
+            optimisedRouteReporter.report(routes, timedResult.result, timedResult.elapsed, strategy);
         } catch (Exception e) {
             logger.error("Failed to optimise batch of routes: {}", e.getMessage());
             routeRepository.addRoutes(routes);

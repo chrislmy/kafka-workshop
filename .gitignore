@@ -1,3 +1,4 @@
 producer/node_modules/*
 .idea
 target
+grafana
